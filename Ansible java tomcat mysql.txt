@@ -1,0 +1,150 @@
+**********************************Ansible Task (Java, tomcat, Jenkins, mysql) On Ubuntu******************************************
+
+
+------------------JAVA Install---------------------------- we check java home= echo $JAVA_HOME----------
+ansible-galaxy init devops(first create rolle )
+
+
+---
+# tasks file for java
+# Add the Java ppa repository
+ - hosts: all
+   tasks:
+   - name: Add Java repository
+     shell: add-apt-repository -y ppa:webupd8team/java
+# Automatically accepts the Oracle License popup in the terminal
+   - name: Automatically select the Oracle License
+     shell: echo debconf shared/accepted-oracle-license-v1-1 select true | sudo debconf-set-selections
+# Install Java 8
+   - name: Install the Java 8 package
+     apt:
+      name: oracle-java8-installer
+      state: present
+      update_cache: yes
+
+
+
+
+
+-------------------------Tomcat Install--------------------------
+
+# tasks file for tomcat
+- name: Make sure that we can connect to the machine
+  ping:
+
+- name: add group "tomcat"
+  group: name=tomcat
+
+- name: add user "tomcat"
+  user: name=tomcat group=tomcat createhome=yes
+  become: true
+
+- name: download tomcat
+  get_url:
+      url=http://mirrors.wuchna.com/apachemirror/tomcat/tomcat-7/v7.0.91/bin/apache-tomcat-7.0.91.tar.gz dest=/opt/
+
+- name: Extract Tomcat archive
+  command: tar zxvf /opt//apache-tomcat-7.0.91.tar.gz -C /opt/ creates=/opt/apache-tomcat-7.0.91
+
+- name: Change ownership of Tomcat installation
+  file: path=/opt/apache-tomcat-7.0.91 owner=tomcat group=tomcat state=directory recurse=yes
+
+- name: Start Tomcat
+  command: nohup /opt/apache-tomcat-7.0.91/bin/startup.sh
+  become: true
+  become_user: tomcat
+
+- name: Configure Tomcat users
+  template: src=tomcat-users.xml.j2 dest=/opt/apache-tomcat-7.0.91//conf/tomcat-users.xml
+
+- name: restarting tomcat
+  raw: nohup /opt/apache-tomcat-7.0.91/bin/shutdown.sh
+
+- name: restarting tomcat
+  raw: nohup /opt/apache-tomcat-7.0.91/bin/startup.sh
+
+- name: depoly aplication into clients
+  copy: src=/var/lib/jenkins/workspace/test/target/spring-mvc-showcase.war dest=/opt/apache-tomcat-7.0.91/webapps
+
+
+
+
+
+-------------------Jenkins Install----------------------
+
+
+---
+# tasks file for jenkins
+- name: Add Jenkins key
+  apt_key:
+    url: "https://pkg.jenkins.io/debian-stable/jenkins.io.key"
+    state: present
+
+- name: Add Jenkins repository
+  blockinfile:
+   path: /etc/apt/sources.list
+   block: |
+     deb https://pkg.jenkins.io/debian-stable binary/
+
+
+- name: Install Jenkins binary package
+  apt:
+    name: jenkins
+    update_cache: yes
+
+--------create site.yml------------------
+---
+ - hosts: all
+   roles:
+      - role: devops
+              tomcat
+
+
+
+docker install in centos6 below link
+https://www.liquidweb.com/kb/how-to-install-docker-on-centos-6/
+
+
+jenkins pipeline link
+
+https://www.youtube.com/watch?v=gdbA3vR2eD
+
+
+
+jenkins pipeline
+
+node
+{
+    stage('Git Checkout'){
+	git 'https://github.com/venkateswarlu009/my-app'
+    }
+    stage('mvn '){
+                
+   def mvnhome=tool name: 'maven', type: 'maven'
+                  
+   def mvncmd="${mvnhome}/bin/mvn"
+   sh "${mvncmd} clean package"
+   sh 'mv target/myweb*.war target/myweb.war'
+   }
+   stage('Build Docker Imager'){
+   sh 'docker build -t venki518/web:0.0.1 .'
+   }
+   stage('tagging'){
+   sh 'docker tag venki518/web:0.0.1  venki518/docker:ownimage2'
+    }
+   stage('Push to Docker Hub'){
+   withCredentials([string(credentialsId: 'pasw', variable: 'pasw')]){
+    // some block
+   sh "docker login -u venki518 -p ${pasw}"
+   }
+    stage('push the docker image'){
+    sh 'docker push venki518/docker:ownimage2'
+    } 
+    stage('Deploy to Dev Environment'){
+    def dockerRun = 'docker run -dti -p 8085:8080 --name myweb4 venki518/docker:ownimage2 '
+    sshagent(['devops']){
+    // some block
+    sh "ssh -o StrictHostKeyChecking=no ubuntu@172.31.10.77 ${dockerRun}"
+    }
+    }
+    }

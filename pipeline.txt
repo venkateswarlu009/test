@@ -1,0 +1,42 @@
+node
+{
+    stage('git scm'){
+        git credentialsId: '9240cda8-6319-4ec4-b64d-9120228dd3af', url: 'https://github.com/RAMIREDDYSOMULA/jenkins-pipeline.git'
+
+    }
+    stage('mvn '){
+                
+   def mvnhome=tool name: 'maven', type: 'maven'
+                  
+   def mvncmd="${mvnhome}/bin/mvn"
+                   
+   sh "${mvncmd} clean package"
+   sh 'mv target/myweb*.war target/myweb.war'
+                   
+              
+ }
+stage('Build Docker Imager'){
+   sh 'docker build -t ram786/web .'
+ }
+  stage('Push to Docker Hub')
+ {
+ 
+	    withCredentials([string(credentialsId: 'pasw', variable: 'pasw')])
+	    {
+        sh "docker login -u ram786 -p ${pasw}"
+        }
+        stage('tagging'){
+        
+        sh 'docker tag ram786/web  ram786/web:ownimage2'
+        }
+        stage('push the docker image'){
+        sh 'docker push ram786/web:ownimage2'
+}
+   stage('Deploy to Dev Environment'){
+   def dockerRun = 'docker run -d -p 8083:8080 --name myweb ram786/ownimage2 '
+   sshagent(['docker-dev']) {
+    sh "ssh -o StrictHostKeyChecking=no ec2-user@172.31.80.178 ${dockerRun}"
+   }
+}
+
+}

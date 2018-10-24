@@ -1,0 +1,291 @@
+			DOCKER
+docker is container service
+
+		docker links
+https://hub.docker.com
+get.docker.com
+		
+		installation
+#curl --fsl get.docker.com -o get.docker.sh
+#sh get.docker.sh
+#docker images
+#docker pull java
+#docker search images
+#docker run -dti --name deve java /bin/bash
+#docker ps(show runnuing container)
+#docker ps -a(show stoped and running container)
+#docker attach containername or id(login to docker container)
+#docker attach deve
+(*logout container ctrl+PQ) 
+#docker inspect deve(show container information)
+#df -h(show information)
+#docker run -ti --name cent2 java /bin/bash
+(its create docker container then directly login to container)
+
+DOCKER CONFIGURATION FILE:
+#cd /var/lib/docker
+aufs container images network
+#docker stop containerid
+#docker start containerid
+#docker restart containerid
+#docker rm cent2(its shows error container running)
+#docker rm -f cent2
+#docker rmi imagename or id
+#docker rmi -f image name or id
+
+			DOCKER REGISTR
+create new registry in hub.docker(public or private)
+#docker tag ownimg venki.aws.009@gmail.com /deve
+#docker tag ownimg java venki518/deve:ownimg
+#docker push venju518/deve:ownimg
+#docker login
+enter username
+      password
+#docker tag java venki518/deve:ownimg
+#docker push venki518/deve:ownimg
+#docker rmi -f imageid or image name
+#docker pull venki518/deve:ownimg
+
+			VOLUMES
+#fdisk -l (show list of drives)
+#fdisk /dev/xvdf
+#lsblk (its show portion and size)
+#mkfs.ext4 /dev/xvdf1
+#partx /dev/xvdf1 (update volume to kernal)
+#kpartx /dev/xvdf1
+#partprobe /dev/xvdf1
+#mount /dev/xvdf1 volume(temporary mounting)
+#vi /etc/fstab
+ /dev/xvdf1 /root/volume etx4 defaults 0 0 (this is perminent mounting)
+#df -h (its show volume attach or not)
+
+#docker images
+#docker run -dti --name c1 -v/root/volume:/tmp -p 81:80 ubuntu /bin/bash
+#ls volumes
+#docker attach c1
+#cd /tmp
+#ls
+#vi test.log
+
+
+		Deploy webaplication in container
+
+ubuntu		centos
+
+apache		httpd
+port		port
+deploy		deploy
+
+#docker attach c1
+#apt-get install apache2
+#yum install httpd
+#vi /var/www/html/index.html
+<html><body><h1>
+well come docker world
+</html></body></h1>
+#service apache2 start
+#service apache2 status
+
+after goto aws instace security grous open inbound rules open 81 port put anywhere save
+after docker engine public ip hitfavertebrowser:81
+show out put
+ 
+dont shultdown #init 0
+
+					DOCKER FILE
+COMMANDS:
+
+ADD(copy the file source to destination (internal container))
+CMD
+ENTRYPOINT
+ENV(environment variable)
+EXPOSE(expose the port number)
+FROM(take base image then build a image to hub)
+MAINTAINER(you was the author)
+RUN(use this commands excutes)
+USER(default user we will create)
+VOLUME(centralize a local to remote)
+WORKDIR
+
+#docker images
+#docker pull ubuntu
+#mkdir devops
+#cd devops
+#vi Dockerfile
+
+FROM ubuntu
+RUN apt-get update && apt-get install git -y && apt-get install apache2 -y && service apache2 start
+RUN apt-get install tree -y
+CMD mkdir /root/test
+MAINTAINER venki
+ADD /etc/passwd /tmp
+EXPOSE 81
+WORKDIR /bin/bash
+USER venki
+VOLUME /tmp:/tmp
+
+:wq!
+
+#docker build -t prod(new image name) 
+#docker build -t prod .(dot meas docker file in current directory)
+#docker images
+#docker run -dti --name c1 imageid /bin/bash
+#docker ps
+#docker attach c1
+c1#dpkg -l git
+c1#service apache2 status
+c1#dpkg -l tree
+#cat /etc/passwd(user checking)
+#netstat -l
+#apt-get install netstat
+#cd /var/lib/docker(docker configuration path)
+#docker ps
+goto aws open security groups open inbound rules open port 81 anywhere
+hit container ip your favorite browser:81
+
+			DOCKER COMMIT
+by using docker commit we can build and customized image from running container
+
+#docker commit conatainerid(running container) prod(new image name)
+#docker images
+#docker images -a 
+#docker inspect containerid
+
+			DOCKER NETWORK
+#docker network ls
+#docker network create --subnet=192.168.0.0/16 devnet(network name)
+#docker network ls
+#docker images
+ubutnu
+#docker run -dti --name devcont --net devnet --ip 192.168.0.1 -p 81:80 ubuntu /bin/bash
+#docker inspect containerid
+
+			DOCKER LINK
+linking between one container to another container in same engine
+#docker pull wordpress
+#docker run --name=linkcont -p 89:80 -d wordpress
+
+WORDPRESS WITH CONNECTION WITH DATABASE
+
+#docker images
+#docker run --name msql -e MYSQL_ROOT_PASSWORD=abcd1234 -d mysql
+#docker ps
+#docker run --name press1 --link -p 100:80 -d wordpress msql:mysql
+goto aws console open portnumber 100 anywhere hit favorite browser
+
+			DOCKER COMPOSE FILE
+insted of required containers individualy then write a composefile then run a no.of container if we required
+
+step1:
+installing docker compose
+#apt-get update
+#apt-ger -y install python-pip
+#pip install docker-compose
+#docker-compose -v
+ 				link
+https://docs.docker.com/compose/wordpress/#build-the-project
+#mkdir press
+#cd press
+#vi docker-compose.yml
+
+version: '2'
+services:
+   db:
+     image: mysql:5.7
+     volumes:
+          - db_data:/var/lib/mysql
+     restart: always
+     environment:
+       MYSQL_ROOT_PASSWORD: somewordpress
+       MYSQL_DATABASE: wordpress
+       MYSQL_USER: wordpress
+       MYSQL_PASSWORD: wordpress
+   wordpress:
+     depends_on:
+          - db
+     image: wordpress
+     ports:
+          - "8000:80"
+     restart: always
+     environment:
+       WORDPRESS_DB_HOST: db:3306
+       WORDPRESS_DB_USER: wordpress
+       WORDPRESS_DB_PASSWORD: wordpress
+volumes:
+   db_data:
+
+#docker ps
+#docker-compose up -d
+#docker ps
+open inbound rules open inbound 8000
+ 
+docker compose commands
+#docker compose ps
+#docker-compose stop
+#docker-compose rm -f
+#docker-compose up
+#docker-compose rm(remove runnign compose)
+
+
+				DOCKER SWARM
+terms:  swarm master,worker,services,images,container,process
+docker networks: 
+none
+bridge }single docker host
+host   }
+overkey(use docker swarm
+
+ITS WORKS RAFT ALGORITHM
+
+step1:take 4 amazon machines
+#sudo hostname mag1
+#sudo hostname mag2
+#sudo hostname mag3
+#sudo hostname node1
+mag1# (install docker get.docker.com)should be docker install in all servers
+
+#docker -version
+mag1#docker swarm init
+then generate two tokens 
+to initilize the swarm manager
+after to add worker to this swarm run the follow commands
+got node1-> then paste the cmmd
+mag1#docker node ls
+mag2#paste the token 
+then mag2 to also add the swarm mang1
+mag3#paste the token
+then mag3 to also add the swarm mag1
+mag1#docker pull nginx
+mag1#docker service create --name myswarm --replicas 10 nginx
+mag1#docker ps
+mag2#docker ps
+mag3#docker ps
+node1#docker ps
+mag1#docker service ls
+mag1#docker service ps myswarm
+
+
+example:
+mag1#shutdown -h now
+mag2#docker node ls
+mag2#docker ps
+mag3#docker ps
+node1#docker ps
+mag2#docker ps service myswarm
+node1#docker ps service myswarm(connt work in node)
+mag2#docker node promote node1
+mag2#docker node ls
+mag2#shutdown -h now
+cluster was not works
+
+#docker service ps myswarm
+
+DEPLOY APPLICATION IN DOCKER SWARM:
+
+mag1#vi docker-stack.yml
+mag1#docker stack deploy --compose-file docker-stack.yml vote
+mag1#docker stack services vote(is service)
+mag1#docker service ls
+
+				links
+https://medium.com/@grigorkh/docker-for-begineres-part4-depolying-an-app-to-0-swarm-620b4d67e7e763

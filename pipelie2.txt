@@ -1,0 +1,24 @@
+node 
+{
+    stage('Get code from SCM')
+{
+    git 'https://github.com/jenkins-docs/simple-java-maven-app.git'
+}
+stage('build pom.xml')
+{
+   
+   withMaven( jdk: 'java', maven: 'maven') 
+   {
+    dir('/var/lib/jenkins/workspace/first_pipiline_project')
+    {
+//echo 'mvn'
+        sh ('mvn compile')
+    }
+    }
+}
+stage('push artefacts into s3 bucket')
+{
+   s3Upload consoleLogLevel: 'INFO', dontWaitForConcurrentBuildCompletion: false, entries: [[bucket: 'docker345', excludedFile: '', flatten: false, gzipFiles: false, keepForever: false, managedArtifacts: true, noUploadOnFailure: false, selectedRegion: 'us-east-1', showDirectlyInBrowser: false, sourceFile: '**/*.jar', storageClass: 'STANDARD', uploadFromSlave: false, useServerSideEncryption: true]], pluginFailureResultConstraint: 'SUCCESS', profileName: 'docker345', userMetadata: []
+
+}    
+}

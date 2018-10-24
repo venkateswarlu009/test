@@ -1,0 +1,36 @@
+node
+{
+    stage('Git Checkout'){
+	git 'https://github.com/venkateswarlu009/my-app'
+    }
+    stage('mvn '){
+                
+   def mvnhome=tool name: 'maven', type: 'maven'
+                  
+   def mvncmd="${mvnhome}/bin/mvn"
+   sh "${mvncmd} clean package"
+   sh 'mv target/myweb*.war target/myweb.war'
+   }
+   stage('Build Docker Imager'){
+   sh 'docker build -t venki518/web:0.0.1 .'
+   }
+   stage('tagging'){
+   sh 'docker tag venki518/web:0.0.1  venki518/docker:ownimage2'
+    }
+   stage('Push to Docker Hub'){
+   withCredentials([string(credentialsId: 'pasw', variable: 'pasw')]){
+    // some block
+   sh "docker login -u venki518 -p ${pasw}"
+   }
+    stage('push the docker image'){
+    sh 'docker push venki518/docker:ownimage2'
+    } 
+    stage('Deploy to Dev Environment'){
+    def dockerRun = 'docker run -dti -p 8085:8080 --name myweb4 venki518/docker:ownimage2 '
+    sshagent(['devops']){
+    // some block
+    sh "ssh -o StrictHostKeyChecking=no ubuntu@172.31.10.77 ${dockerRun}"
+    }
+    }
+    }
+}  

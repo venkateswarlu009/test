@@ -1,0 +1,47 @@
+ansible configure with jenkins 
+
+step1:ansible and jenkins install in one server
+step2:install invoke ansible playbook plugon in jenkins
+step3:ansible configure in jenkins goto jenkins global tool configuration here 
+             (use below command where is ansible
+              which ansible)
+
+name:  ansible
+Path to ansible executables directory: /usr/bin 
+
+after save
+
+ste4: create one job(ex:maven)
+add git project url 
+step5: add postbuild step
+
+Ansible installation: ansible
+playbook path : /etc/ansible/site.yml
+inventry:
+         file or host list
+         File path or comma separated host list:          /etc/ansible/hosts
+
+credentials: add
+             here: seletct
+ 		ssh username with privatekey
+	     username: root
+             private key: enter directly
+             enter id_rsa key copy and paste here
+             id: ansible
+after seletc cerdential asper given name
+
+select : become
+
+
+
+Build is failure error
+
+error1: UNREACHABLE! => {"changed": false, "msg": "Failed to connect to the host via ssh: Host key verification failed.\r\n", "unreachable": true}
+
+solution:
+
+goto /etc/ansible/ansible.cfg
+
+add below command
+[defaults]
+host_key_checking = False 
