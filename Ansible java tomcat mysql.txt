@@ -18,9 +18,7 @@ ansible-galaxy init devops(first create rolle )
 # Install Java 8
    - name: Install the Java 8 package
      apt:
-      name: oracle-java8-installer
-      state: present
-      update_cache: yes
+      name: oracle-java8-installer state: present update_cache: yes
 
 
 
